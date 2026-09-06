@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+dist
+.env*.local
+.env
+npm-debug.log*
+.DS_Store
+*.pem
+.vercel
+render-spec.json
+render-payload.json
+
