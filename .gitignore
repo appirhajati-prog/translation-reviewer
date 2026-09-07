@@ -10,4 +10,5 @@ npm-debug.log*
 .vercel
 render-spec.json
 render-payload.json
+tsconfig.tsbuildinfo
 
