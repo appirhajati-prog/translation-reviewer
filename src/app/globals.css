@@ -17,7 +17,22 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Tahoma, Arial, sans-serif;
+  font-family: var(--font-vazir), var(--font-inter), Tahoma, Arial, sans-serif;
+  line-height: 1.9;
+}
+
+/* English / Latin text (book titles, original samples) uses Inter */
+.font-en,
+:lang(en) {
+  font-family: var(--font-inter), var(--font-vazir), Arial, sans-serif;
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.6;
 }
 
 @layer utilities {

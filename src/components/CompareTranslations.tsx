@@ -91,7 +91,7 @@ export default function CompareTranslations({ translations, originalText }: Prop
           <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-2">
             📖 متن اصلی (برای مقایسه)
           </h4>
-          <p className="text-gray-800 dark:text-gray-200 italic leading-relaxed" dir="ltr">
+          <p className="font-en text-gray-800 dark:text-gray-200 italic leading-relaxed" dir="ltr" lang="en">
             {originalText}
           </p>
         </div>

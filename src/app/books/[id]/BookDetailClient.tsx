@@ -37,7 +37,7 @@ export default function BookDetailClient({ book }: Props) {
               <h3 className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-2">
                 📖 نمونه متن اصلی
               </h3>
-              <p className="text-gray-800 dark:text-gray-200 italic leading-relaxed" dir="ltr">
+              <p className="font-en text-gray-800 dark:text-gray-200 italic leading-relaxed" dir="ltr" lang="en">
                 {book.originalSampleText}
               </p>
             </div>

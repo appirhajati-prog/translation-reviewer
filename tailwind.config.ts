@@ -13,7 +13,7 @@ const config: Config = {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        sans: ['Tahoma', 'Arial', 'sans-serif'],
+        sans: ['var(--font-vazir)', 'var(--font-inter)', 'Tahoma', 'Arial', 'sans-serif'],
       },
     },
   },
