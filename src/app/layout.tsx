@@ -27,10 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl">
-      <body
-        className={`${vazirmatn.variable} ${inter.variable} font-sans antialiased`}
-      >
+    <html lang="fa" dir="rtl" className={`${vazirmatn.variable} ${inter.variable}`}>
+      <body className={`${vazirmatn.className} font-sans antialiased`}>
         {children}
       </body>
     </html>
