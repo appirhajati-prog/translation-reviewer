@@ -11,4 +11,9 @@ npm-debug.log*
 render-spec.json
 render-payload.json
 tsconfig.tsbuildinfo
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+reviews.db
 

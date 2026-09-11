@@ -15,3 +15,18 @@ services:
         value: production
       - key: NEXT_TELEMETRY_DISABLED
         value: 1
+  - type: web
+    name: translation-reviewer-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: python -m api.seed && uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: CORS_ORIGINS
+        value: https://appirhajati-prog.github.io
+

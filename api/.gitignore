@@ -1,0 +1,11 @@
+# Python / FastAPI
+__pycache__/
+*.py[cod]
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+.venv/
+venv/
+.env
+.env.local

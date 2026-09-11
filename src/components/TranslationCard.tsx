@@ -11,6 +11,7 @@ interface Props {
 
 export default function TranslationCard({ translation, rank }: Props) {
   const [showReviews, setShowReviews] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -133,7 +134,11 @@ export default function TranslationCard({ translation, rank }: Props) {
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4 mb-8">هنوز نظری ثبت نشده. اولین نفر باشید!</p>
           )}
-          <ReviewForm />
+          <ReviewForm
+            key={refreshKey}
+            translationId={translation.id}
+            onSubmitted={() => setRefreshKey((k) => k + 1)}
+          />
         </div>
       )}
     </div>
