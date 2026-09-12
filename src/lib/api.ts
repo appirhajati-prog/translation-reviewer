@@ -28,6 +28,8 @@ function mapReview(r: any): Review {
     strengths: split(r.strengths),
     weaknesses: split(r.weaknesses),
     createdAt: r.created_at ?? r.createdAt ?? "",
+    source: r.source ?? "manual",
+    sourceUrl: r.source_url ?? r.sourceUrl ?? "",
   };
 }
 
@@ -103,4 +105,46 @@ export async function postReview(
     throw new Error(text || `API ${res.status}`);
   }
   return mapReview(await res.json());
+}
+
+export interface AnalysisJob {
+  id: number;
+  translation_id: string;
+  status: "pending" | "running" | "done" | "error";
+  sources: string;
+  comments_found: number;
+  avg_rating: number;
+  summary: string;
+  error: string;
+  created_at: string;
+}
+
+export async function analyzeTranslation(
+  translationId: string,
+  sourceUrls: string[] = [],
+  maxPages = 5
+): Promise<{ job_id: number; status: string }> {
+  if (!isApiEnabled) throw new Error("API not configured");
+  const res = await fetch(`${API_URL}/api/translations/${translationId}/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_urls: sourceUrls, max_pages: maxPages }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `API ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getAnalysisJob(
+  translationId: string,
+  jobId: number
+): Promise<AnalysisJob> {
+  const res = await fetch(
+    `${API_URL}/api/translations/${translationId}/analyze/${jobId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
 }

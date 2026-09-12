@@ -1,4 +1,4 @@
-"""Pydantic schemas matching web/src/types/index.ts shapes."""
+"""Pydantic schemas matching web/src/types/index.ts shapes + analysis jobs."""
 from pydantic import BaseModel, Field
 
 
@@ -25,6 +25,8 @@ class ReviewOut(ReviewIn):
     id: int
     translation_id: str
     created_at: str
+    source: str = "manual"
+    source_url: str = ""
 
 
 class TranslationOut(BaseModel):
@@ -49,3 +51,30 @@ class BookOut(BaseModel):
     description: str
     original_sample_text: str
     translations: list[TranslationOut]
+
+
+class AnalyzeRequest(BaseModel):
+    """Manual trigger: optionally pin exact pages, else auto-discover via search."""
+    source_urls: list[str] = Field(default_factory=list, max_length=5)
+    max_pages: int = Field(default=5, ge=1, le=8)
+
+
+class AnalyzeResponse(BaseModel):
+    job_id: int
+    status: str
+    comments_found: int = 0
+    avg_rating: float = 0.0
+    summary: str = ""
+
+
+class JobOut(BaseModel):
+    id: int
+    translation_id: str
+    status: str
+    sources: str = ""
+    comments_found: int = 0
+    avg_rating: float = 0.0
+    summary: str = ""
+    error: str = ""
+    created_at: str = ""
+

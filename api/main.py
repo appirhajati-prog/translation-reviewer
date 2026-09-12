@@ -1,15 +1,27 @@
-"""FastAPI backend for translation-reviewer. Serves books + persists reviews."""
+"""FastAPI backend: books + manual reviews + auto web-analysis of translator comments."""
+import json
 import os
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from .analyzer import score_comment, summarize
 from .database import Base, engine, get_db
-from .models import Book, Review, Translation
-from .schemas import BookOut, DimensionRating, ReviewIn, ReviewOut, TranslationOut
+from .fetcher import fetch_comments_for_translation
+from .models import AnalysisJob, Book, Review, Translation
+from .schemas import (
+    AnalyzeRequest,
+    AnalyzeResponse,
+    BookOut,
+    DimensionRating,
+    JobOut,
+    ReviewIn,
+    ReviewOut,
+    TranslationOut,
+)
 
 app = FastAPI(title="translation-reviewer API", version="0.1.0")
 
@@ -52,6 +64,8 @@ def review_to_out(r: Review) -> ReviewOut:
         strengths="، ".join(_split_csv(r.strengths)) if "," in (r.strengths or "") else (r.strengths or ""),
         weaknesses="، ".join(_split_csv(r.weaknesses)) if "," in (r.weaknesses or "") else (r.weaknesses or ""),
         created_at=r.created_at,
+        source=r.source or "manual",
+        source_url=r.source_url or "",
     )
 
 
@@ -166,3 +180,139 @@ def create_review(translation_id: str, payload: ReviewIn, db: Session = Depends(
     db.commit()
     db.refresh(review)
     return review_to_out(review)
+
+
+def _recompute(db: Session, translation_id: str) -> None:
+    agg = (
+        db.query(
+            func.count(Review.id),
+            func.avg(Review.rating),
+            func.avg(Review.fluency),
+            func.avg(Review.fidelity),
+            func.avg(Review.readability),
+            func.avg(Review.editing),
+        )
+        .filter(Review.translation_id == translation_id)
+        .one()
+    )
+    t = db.query(Translation).filter(Translation.id == translation_id).first()
+    if t:
+        t.review_count = int(agg[0] or 0)
+        t.average_rating = round(float(agg[1] or 0), 1)
+        t.dim_fluency = round(float(agg[2] or 0), 1)
+        t.dim_fidelity = round(float(agg[3] or 0), 1)
+        t.dim_readability = round(float(agg[4] or 0), 1)
+        t.dim_editing = round(float(agg[5] or 0), 1)
+        db.commit()
+
+
+def _run_analysis(job_id: int) -> None:
+    """Background worker: fetch comments, score them, store as reviews."""
+    from .database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        job = db.query(AnalysisJob).filter(AnalysisJob.id == job_id).first()
+        if not job:
+            return
+        job.status = "running"
+        db.commit()
+        t = db.query(Translation).filter(Translation.id == job.translation_id).first()
+        if not t:
+            job.status = "error"
+            job.error = "translation not found"
+            db.commit()
+            return
+        book = db.query(Book).filter(Book.id == t.book_id).first()
+        try:
+            req = json.loads(job.sources or "{}")
+        except Exception:
+            req = {}
+        comments, fetched = fetch_comments_for_translation(
+            book_title=book.title if book else "",
+            translator_name=t.translator_name,
+            publisher=t.publisher,
+            source_urls=req.get("source_urls") or None,
+            max_pages=int(req.get("max_pages") or 5),
+        )
+        scores = [score_comment(c.text) for c in comments]
+        for c, s in zip(comments, scores):
+            db.add(
+                Review(
+                    translation_id=t.id,
+                    user_name=c.author,
+                    rating=s["rating"],
+                    fluency=s["dimensions"]["fluency"],
+                    fidelity=s["dimensions"]["fidelity"],
+                    readability=s["dimensions"]["readability"],
+                    editing=s["dimensions"]["editing"],
+                    comment=c.text,
+                    strengths=",".join(s["strengths"]),
+                    weaknesses=",".join(s["weaknesses"]),
+                    created_at=datetime.now().strftime("%Y/%m/%d %H:%M"),
+                    source="auto-analysis",
+                    source_url=c.url,
+                )
+            )
+        db.commit()
+        _recompute(db, t.id)
+        job.comments_found = len(comments)
+        job.avg_rating = round(sum(s["rating"] for s in scores) / len(scores), 1) if scores else 0.0
+        job.summary = summarize([c.text for c in comments], scores)
+        job.sources = json.dumps({"fetched": fetched}, ensure_ascii=False)
+        job.status = "done"
+        db.commit()
+    except Exception as e:  # never crash silently — record it on the job
+        try:
+            job = db.query(AnalysisJob).filter(AnalysisJob.id == job_id).first()
+            if job:
+                job.status = "error"
+                job.error = str(e)[:500]
+                db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
+
+
+@app.post("/api/translations/{translation_id}/analyze", response_model=AnalyzeResponse, status_code=202)
+def analyze_translation(translation_id: str, payload: AnalyzeRequest, background: BackgroundTasks, db: Session = Depends(get_db)):
+    t = db.query(Translation).filter(Translation.id == translation_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="translation not found")
+    job = AnalysisJob(
+        translation_id=translation_id,
+        status="pending",
+        sources=json.dumps(
+            {"source_urls": payload.source_urls, "max_pages": payload.max_pages},
+            ensure_ascii=False,
+        ),
+        created_at=datetime.now().strftime("%Y/%m/%d %H:%M"),
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    background.add_task(_run_analysis, job.id)
+    return AnalyzeResponse(job_id=job.id, status="pending")
+
+
+@app.get("/api/translations/{translation_id}/analyze/{job_id}", response_model=JobOut)
+def get_analysis_job(translation_id: str, job_id: int, db: Session = Depends(get_db)):
+    job = (
+        db.query(AnalysisJob)
+        .filter(AnalysisJob.id == job_id, AnalysisJob.translation_id == translation_id)
+        .first()
+    )
+    if not job:
+        raise HTTPException(status_code=404, detail="job not found")
+    return JobOut(
+        id=job.id,
+        translation_id=job.translation_id,
+        status=job.status,
+        sources=job.sources or "",
+        comments_found=job.comments_found,
+        avg_rating=job.avg_rating,
+        summary=job.summary or "",
+        error=job.error or "",
+        created_at=job.created_at or "",
+    )

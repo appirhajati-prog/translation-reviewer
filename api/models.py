@@ -1,4 +1,4 @@
-"""SQLAlchemy models mirroring web/src/types/index.ts."""
+"""SQLAlchemy models mirroring web/src/types/index.ts + source tracking."""
 from sqlalchemy import Column, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
@@ -57,4 +57,24 @@ class Review(Base):
     weaknesses = Column(Text, default="")  # comma separated
     created_at = Column(String, default="")
 
+    # where did this review come from? manual | external | auto-analysis
+    source = Column(String, default="manual")
+    source_url = Column(String, default="")
+
     translation = relationship("Translation", back_populates="reviews")
+
+
+class AnalysisJob(Base):
+    """Tracks one fetch+analyse run so the UI can show progress and provenance."""
+    __tablename__ = "analysis_jobs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    translation_id = Column(String, ForeignKey("translations.id"), nullable=False, index=True)
+    status = Column(String, default="pending")  # pending | running | done | error
+    sources = Column(Text, default="")  # JSON list of urls/pages fetched
+    comments_found = Column(Integer, default=0)
+    avg_rating = Column(Float, default=0.0)
+    summary = Column(Text, default="")
+    error = Column(String, default="")
+    created_at = Column(String, default="")
+

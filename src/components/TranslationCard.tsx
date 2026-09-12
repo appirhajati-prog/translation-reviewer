@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Translation } from "@/types";
+import AnalysisPanel from "./AnalysisPanel";
 import ReviewForm from "./ReviewForm";
 
 interface Props {
@@ -127,7 +128,25 @@ export default function TranslationCard({ translation, rank }: Props) {
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">{review.createdAt}</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {review.createdAt}
+                    {review.source === "auto-analysis" && (
+                      <span className="mr-2 bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">
+                        🤖 تحلیل خودکار وب
+                      </span>
+                    )}
+                  </p>
+                  {review.sourceUrl && (
+                    <a
+                      href={review.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      dir="ltr"
+                      className="text-[11px] text-blue-600 dark:text-blue-400 underline break-all"
+                    >
+                      {review.sourceUrl}
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -139,6 +158,12 @@ export default function TranslationCard({ translation, rank }: Props) {
             translationId={translation.id}
             onSubmitted={() => setRefreshKey((k) => k + 1)}
           />
+          <div className="mt-4">
+            <AnalysisPanel
+              translationId={translation.id}
+              translatorName={translation.translatorName}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -21,6 +21,8 @@ export interface Review {
   strengths: string[];
   weaknesses: string[];
   createdAt: string;
+  source?: "manual" | "auto-analysis" | "external";
+  sourceUrl?: string;
 }
 
 export interface Translation {
