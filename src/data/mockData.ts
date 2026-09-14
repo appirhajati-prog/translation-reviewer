@@ -16,9 +16,9 @@ export const mockBooks: Book[] = [
         translatorName: "بهمن فرزانه",
         publisher: "انتشارات امیرکبیر",
         publishYear: 1398,
-        averageRating: 4.7,
-        dimensionAverages: { fluency: 4.8, fidelity: 4.9, readability: 4.5, editing: 4.6 },
-        reviewCount: 24,
+        averageRating: 4.5,
+        dimensionAverages: { fluency: 4.5, fidelity: 4.5, readability: 4.0, editing: 4.8 },
+        reviewCount: 4,
         sampleText: "سال‌ها بعد، در برابر جوخه اعدام، سرهنگ اورلیانو بوئندیا آن عصر دور را به یاد آورد که پدرش او را برد تا یخ را بشناسد.",
         reviews: [
           {
@@ -42,7 +42,7 @@ export const mockBooks: Book[] = [
             strengths: ["دقت در ترجمه اسامی خاص"],
             weaknesses: ["جملات طولانی", "کمبود توضیحات فرهنگی"],
             createdAt: "1404/05/20",
-            source: "manual",
+            source: "manual" as const,
           },
           {
             id: "r-auto-t1a",
@@ -55,7 +55,7 @@ export const mockBooks: Book[] = [
             strengths: ["نثر جاافتاده و کلاسیک", "چاپ معتبر امیرکبیر", "نسخه صوتی پرمخاطب", "شجره‌نامه ابتدای کتاب"],
             weaknesses: ["ترجمه از زبان واسط نه اسپانیایی"],
             createdAt: "1405/06/23",
-            source: "auto-analysis",
+            source: "auto-analysis" as const,
             sourceUrl:
               "https://taaghche.com/blog/1402/05/08/%D9%85%D9%82%D8%A7%DB%8C%D8%B3%D9%87-%D8%AA%D8%B1%D8%AC%D9%85%D9%87-%D9%87%D8%A7%DB%8C-%D8%B5%D8%AF-%D8%B3%D8%A7%D9%84-%D8%AA%D9%86%D9%87%D8%A7%DB%8C%DB%8C/",
           },
@@ -70,7 +70,7 @@ export const mockBooks: Book[] = [
             strengths: ["شجره‌نامه ابتدای چاپ امیرکبیر", "مناسب خوانش عمیق"],
             weaknesses: ["قلم سنگین", "اسم‌های مشابه گیج‌کننده"],
             createdAt: "1405/06/23",
-            source: "auto-analysis",
+            source: "auto-analysis" as const,
             sourceUrl: "https://www.iranketab.ir/book/155-one-hundred-years-of-solitude",
           },
         ],
@@ -98,7 +98,7 @@ export const mockBooks: Book[] = [
             strengths: ["ترجمه مستقیم از اسپانیایی", "دقت و روانی", "پرمخاطب‌ترین نسخه الکترونیکی"],
             weaknesses: [],
             createdAt: "1405/06/23",
-            source: "auto-analysis",
+            source: "auto-analysis" as const,
             sourceUrl:
               "https://taaghche.com/blog/1402/05/08/%D9%85%D9%82%D8%A7%DB%8C%D8%B3%D9%87-%D8%AA%D8%B1%D8%AC%D9%85%D9%87-%D9%87%D8%A7%DB%8C-%D8%B5%D8%AF-%D8%B3%D8%A7%D9%84-%D8%AA%D9%86%D9%87%D8%A7%DB%8C%DB%8C/",
           },
